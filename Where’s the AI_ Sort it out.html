@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Where’s the AI? Sort it out</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --ink: #1b2440;
+  --muted: #56607d;
+  --line: #d5dcec;
+  --ai: #4a56d6;
+  --ai-bg: #e8eaff;
+  --no: #a8610a;
+  --no-bg: #fff0d9;
+  --depends: #137a75;
+  --depends-bg: #dcf4f1;
+  --good: #14783d;
+  --good-bg: #dff5e6;
+  --bad: #b3261e;
+  --bad-bg: #fde5e3;
+  --focus: #1b2440;
+  --shadow: 0 12px 32px rgb(27 36 64 / 8%);
+
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121830;
+    --surface: #1c2547;
+    --ink: #eef1ff;
+    --muted: #aab3d6;
+    --line: #34406b;
+    --ai: #9aa4ff;
+    --ai-bg: #262f66;
+    --no: #ffb454;
+    --no-bg: #4a3512;
+    --depends: #67d4c9;
+    --depends-bg: #173d40;
+    --good: #5ddc8b;
+    --good-bg: #153a26;
+    --bad: #ff8a80;
+    --bad-bg: #4a1d1b;
+    --focus: #eef1ff;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121830;
+  --surface: #1c2547;
+  --ink: #eef1ff;
+  --muted: #aab3d6;
+  --line: #34406b;
+  --ai: #9aa4ff;
+  --ai-bg: #262f66;
+  --no: #ffb454;
+  --no-bg: #4a3512;
+  --depends: #67d4c9;
+  --depends-bg: #173d40;
+  --good: #5ddc8b;
+  --good-bg: #153a26;
+  --bad: #ff8a80;
+  --bad-bg: #4a1d1b;
+  --focus: #eef1ff;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at top, var(--ai-bg), transparent 38rem),
+    var(--bg);
+  color: var(--ink);
+  font-family: "Fredoka", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+main {
+  width: min(100% - 2rem, 940px);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4rem) 0;
+}
+
+/* Intro and progress */
+h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sub {
+  max-width: 60ch;
+  margin: 0 0 1.75rem;
+  color: var(--muted);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.prog {
+  flex: 1;
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.prog i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ai);
+  transition: width 0.3s ease;
+}
+
+/* Sorting bins */
+.bins {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.bin {
+  min-height: 190px;
+  padding: 1.15rem;
+  border: 2px dashed var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.bin:hover {
+  transform: translateY(-2px);
+}
+
+.bin h2 {
+  margin: 0 0 0.15rem;
+  font-size: 1.45rem;
+  font-weight: 600;
+}
+
+.bin p {
+  margin: 0 0 0.9rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.bin[data-bin="ai"] {
+  border-color: var(--ai);
+}
+
+.bin[data-bin="no"] {
+  border-color: var(--no);
+}
+
+.bin[data-bin="depends"] {
+  border-color: var(--depends);
+}
+
+.bin[data-bin="ai"] h2 {
+  color: var(--ai);
+}
+
+.bin[data-bin="no"] h2 {
+  color: var(--no);
+}
+
+.bin[data-bin="depends"] h2 {
+  color: var(--depends);
+}
+
+.bin.over,
+.bin[data-bin="ai"].over {
+  background: var(--ai-bg);
+}
+
+.bin[data-bin="no"].over {
+  background: var(--no-bg);
+}
+
+.bin[data-bin="depends"].over {
+  background: var(--depends-bg);
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Feedback and cards */
+#fb {
+  min-height: 6.5rem;
+  margin: 1.25rem 0;
+  padding: 1rem 1.15rem;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+#fb.good {
+  border-color: var(--good);
+  background: var(--good-bg);
+}
+
+#fb.bad {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+}
+
+#fb .st {
+  margin: 0 0 0.2rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+#fb.good .st {
+  color: var(--good);
+}
+
+#fb.bad .st {
+  color: var(--bad);
+}
+
+#fb .ex {
+  margin: 0;
+}
+
+#fb .th {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+
+.card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.95rem;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--line);
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.card:not(.placed):hover {
+  transform: translateY(-2px);
+  border-color: var(--ai);
+  box-shadow: 0 5px 0 var(--ai-bg);
+}
+
+.card .e {
+  font-size: 1.5rem;
+}
+
+.card.sel {
+  outline: 4px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.card:focus-visible,
+.bin:focus-visible,
+button:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.card.drag {
+  z-index: 50;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 25%);
+  cursor: grabbing;
+  transition: none;
+}
+
+.card.placed {
+  border-color: var(--good);
+  background: var(--good-bg);
+  box-shadow: none;
+  cursor: default;
+  touch-action: auto;
+}
+
+.card.shake {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  animation: shake 0.4s;
+}
+
+@keyframes shake {
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+.pile-h {
+  margin: 1.5rem 0 0.65rem;
+  color: var(--muted);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+#pile {
+  display: flex;
+  min-height: 3.5rem;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+/* End-of-game panel */
+#done {
+  display: none;
+  margin-top: 1.5rem;
+  padding: 1.35rem;
+  border: 2px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+#done h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.6rem;
+}
+
+#done dl {
+  margin: 0.8rem 0;
+}
+
+#done dt {
+  margin-top: 0.6rem;
+  font-weight: 600;
+}
+
+#done dd {
+  margin: 0;
+  color: var(--muted);
+}
+
+button.go {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ai);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+button.go:hover {
+  transform: translateY(-2px);
+}
+
+:root[data-theme="dark"] button.go {
+  color: #121830;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) button.go {
+    color: #121830;
+  }
+}
+
+@media (max-width: 560px) {
+  main {
+    width: min(100% - 1.25rem, 940px);
+    padding: 1.75rem 0 2.5rem;
+  }
+
+  .bins {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .bin {
+    min-height: 0;
+    padding: 0.8rem;
+  }
+
+  .bin h2 {
+    font-size: 1.25rem;
+  }
+
+  .bin p {
+    margin-bottom: 0.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>What is AI? Can you decide? </h1>
+    <p class="sub">
+      Drag each card into a box, or tap a card and then tap a box.
+    </p>
+  </header>
+
+  <div class="bar">
+    <span id="count">0 of 11 sorted</span>
+    <div class="prog" aria-hidden="true"><i id="pbar"></i></div>
+  </div>
+
+  <section class="bins" aria-label="Sorting categories">
+    <div
+      class="bin"
+      data-bin="ai"
+      tabindex="0"
+      role="button"
+      aria-label="Uses AI box"
+    >
+      <h2>Uses AI</h2>
+      <p>Part or all of this technology utilizes AI or machine learning.</p>
+      <div class="list" id="l-ai"></div>
+    </div>
+    <div
+      class="bin"
+      data-bin="no"
+      tabindex="0"
+      role="button"
+      aria-label="Not AI box"
+    >
+      <h2>Not AI</h2>
+      <p>None of the core functionality relies on AI or machine learning.</p>
+      <div class="list" id="l-no"></div>
+    </div>
+    <div
+      class="bin"
+      data-bin="depends"
+      tabindex="0"
+      role="button"
+      aria-label="It depends box"
+    >
+      <h2>It depends</h2>
+      <p>There's nuance here!</p>
+      <div class="list" id="l-depends"></div>
+    </div>
+  </section>
+
+  <div id="fb" aria-live="polite">
+    <p class="st">Ready when you are</p>
+    <p class="ex">Pick a card to start. Some of these are tricky!</p>
+  </div>
+
+  <p class="pile-h">Cards to sort</p>
+  <div id="pile"></div>
+
+  <section id="done" aria-live="polite">
+    <h2>All sorted!</h2>
+    <p id="score"></p>
+    <p>Talk it over with someone nearby. Pick the question that fits you:</p>
+    <dl>
+      <dt>Younger explorers</dt>
+      <dd>What makes a calculator and AI different?</dd>
+      <dt>Ages 8 to 12</dt>
+      <dd>Who picks the examples a program learns from? Who might it get wrong?</dd>
+      <dt>Teens and adults</dt>
+      <dd>Whose data trained these tools, and did they agree to it?</dd>
+    </dl>
+    <button class="go" id="again">Play again</button>
+  </section>
+</main>
+<script>
+// Each example includes its category, explanation, and a conversation prompt.
+var ITEMS = [
+  {
+    id: "face-unlock",
+    e: "📱",
+    t: "Unlocking your phone with your face",
+    category: "ai",
+    x: "A neural network trained on many, many faces.",
+    th: "How might the training faces affect who can unlock a phone?"
+  },
+  {
+    id: "maps",
+    e: "🗺️",
+    t: "Google or Apple Maps",
+    category: "depends",
+    x: "Route-finding uses preset algorithms. Traffic and arrival-time prediction use machine learning trained on historical and live data.",
+    th: "Which part of a maps app might learn from past trips?"
+  },
+  {
+    id: "night-mode",
+    e: "🌙",
+    t: "Using Night Mode on your phone’s camera",
+    category: "ai",
+    x: "Machine learning aids traditional camera methods to make the image clear.",
+    th: "What clues might the camera use to improve a night-time photo?"
+  },
+  {
+    id: "credit-check",
+    e: "📊",
+    t: "Credit check for a loan",
+    category: "no",
+    x: "The FICO score is based on fixed rules.",
+    th: "How can a system make an important decision without learning?"
+  },
+  {
+    id: "captcha",
+    e: "🔎",
+    t: "CAPTCHA tests",
+    category: "no",
+    x: "However, early reCAPTCHA tests were used to help train the AI that powers digitizing books and self-driving cars!",
+    th: "How can a task that is not AI still help train AI?"
+  },
+  {
+    id: "autocomplete",
+    e: "⌨️",
+    t: "Text Autocomplete",
+    category: "ai",
+    x: "Modern keyboards use neural language models trained on large text datasets, plus on-device personalization from your typing.",
+    th: "How might your typing change the suggestions you see?"
+  },
+  {
+    id: "self-checkout",
+    e: "🛒",
+    t: "Grocery self-checkout",
+    category: "no",
+    x: "Barcode reading and weight checks follow fixed rules. Some newer cameras might use AI to detect your face, though.",
+    th: "What extra feature could make a self-checkout use AI?"
+  },
+  {
+    id: "resume-screening",
+    e: "📄",
+    t: "Online résumé screening",
+    category: "depends",
+    x: "Some systems only parse and match keywords. Others use machine learning to rank or match before your document ever sees human eyes.",
+    th: "How could you tell whether a screening system uses machine learning?"
+  },
+  {
+    id: "recommendations",
+    e: "🎬",
+    t: "Netflix or Spotify recommendations",
+    category: "ai",
+    x: "Models learn from the viewing and listening patterns of many users to predict what you’ll like.",
+    th: "Could recommendations keep you from discovering something new?"
+  },
+  {
+    id: "calculator",
+    e: "🧮",
+    t: "A calculator",
+    category: "no",
+    x: "It runs fixed arithmetic. There is nothing to learn or predict.",
+    th: "How is following a fixed rule different from making a prediction?"
+  },
+  {
+    id: "spam-filter",
+    e: "📧",
+    t: "Email spam filter",
+    category: "ai",
+    x: "They learn from billions of messages marked as spam or not spam, and combine this with some hand-written rules.",
+    th: "What could happen when a real email looks like spam?"
+  }
+];
+
+var $ = function (selector) {
+  return document.querySelector(selector);
+};
+var pile = $("#pile");
+var fb = $("#fb");
+var sel = null;
+var sorted = 0;
+var firstTry = 0;
+var tries = {};
+
+function shuffle(items) {
+  var shuffled = items.slice();
+
+  for (var i = shuffled.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var item = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = item;
+  }
+
+  return shuffled;
+}
+
+function makeCard(item) {
+  var card = document.createElement("button");
+  card.type = "button";
+  card.className = "card";
+  card.dataset.id = item.id;
+  card.innerHTML =
+    '<span class="e" aria-hidden="true">' +
+    item.e +
+    "</span><span>" +
+    item.t +
+    "</span>";
+  wireCard(card, item);
+  return card;
+}
+
+function showFeedback(className, status, explanation, thought) {
+  fb.className = className;
+  fb.innerHTML =
+    '<p class="st"></p><p class="ex"></p>' +
+    (thought ? '<p class="th"></p>' : "");
+  fb.querySelector(".st").textContent = status;
+  fb.querySelector(".ex").textContent = explanation;
+
+  if (thought) {
+    fb.querySelector(".th").textContent = "Think about it: " + thought;
+  }
+}
+
+function judge(card, item, bin) {
+  var isCorrect = bin === item.category;
+  var categoryName = {
+    ai: "AI",
+    no: "not AI",
+    depends: "something that depends on how it works"
+  }[item.category];
+  tries[item.id] = (tries[item.id] || 0) + 1;
+  clearSelection();
+  card.style.transform = "";
+  card.classList.remove("drag");
+
+  if (isCorrect) {
+    if (tries[item.id] === 1) {
+      firstTry++;
+    }
+
+    card.classList.add("placed");
+    card.disabled = true;
+    $("#l-" + bin).appendChild(card);
+
+    sorted++;
+    $("#count").textContent = sorted + " of " + ITEMS.length + " sorted";
+    $("#pbar").style.width = (sorted / ITEMS.length) * 100 + "%";
+    showFeedback(
+      "good",
+      "Yes! " + item.t + " belongs in “" + categoryName + ".”",
+      item.x,
+      item.th
+    );
+
+    if (sorted === ITEMS.length) {
+      $("#score").textContent =
+        "You got " +
+        firstTry +
+        " of " +
+        ITEMS.length +
+        " on the first try. Getting some wrong is how you learn what to look for.";
+      $("#done").style.display = "block";
+    }
+  } else {
+    card.classList.remove("shake");
+    void card.offsetWidth;
+    card.classList.add("shake");
+    showFeedback(
+      "bad",
+      "Not quite. " + item.t + " belongs in “" + categoryName + ".”",
+      item.x,
+      item.th
+    );
+  }
+}
+
+function clearSelection() {
+  if (sel) {
+    sel.classList.remove("sel");
+    sel = null;
+  }
+}
+
+function binAt(x, y) {
+  var target = null;
+
+  document.querySelectorAll(".bin").forEach(function (bin) {
+    var bounds = bin.getBoundingClientRect();
+    if (
+      x >= bounds.left &&
+      x <= bounds.right &&
+      y >= bounds.top &&
+      y <= bounds.bottom
+    ) {
+      target = bin;
+    }
+  });
+
+  return target;
+}
+
+// Pointer events support mouse, touch, and pen; clicking also enables tap-to-sort.
+function wireCard(card, item) {
+  var startX;
+  var startY;
+  var isDragging = false;
+  var isPointerDown = false;
+
+  card.addEventListener("pointerdown", function (event) {
+    if (card.disabled) {
+      return;
+    }
+
+    isPointerDown = true;
+    isDragging = false;
+    startX = event.clientX;
+    startY = event.clientY;
+    card.setPointerCapture(event.pointerId);
+  });
+
+  card.addEventListener("pointermove", function (event) {
+    if (!isPointerDown) {
+      return;
+    }
+
+    var deltaX = event.clientX - startX;
+    var deltaY = event.clientY - startY;
+
+    if (!isDragging && Math.hypot(deltaX, deltaY) > 6) {
+      isDragging = true;
+      card.classList.add("drag");
+      clearSelection();
+    }
+
+    if (isDragging) {
+      card.style.transform = "translate(" + deltaX + "px," + deltaY + "px)";
+      var target = binAt(event.clientX, event.clientY);
+
+      document.querySelectorAll(".bin").forEach(function (bin) {
+        bin.classList.toggle("over", bin === target);
+      });
+    }
+  });
+
+  card.addEventListener("pointerup", function (event) {
+    if (!isPointerDown) {
+      return;
+    }
+
+    isPointerDown = false;
+    document.querySelectorAll(".bin").forEach(function (bin) {
+      bin.classList.remove("over");
+    });
+
+    if (isDragging) {
+      var target = binAt(event.clientX, event.clientY);
+
+      if (target) {
+        judge(card, item, target.dataset.bin);
+      } else {
+        card.style.transform = "";
+        card.classList.remove("drag");
+      }
+
+      isDragging = false;
+      card._skip = true;
+    } else {
+      card._skip = false;
+    }
+  });
+
+  card.addEventListener("pointercancel", function () {
+    isPointerDown = false;
+    isDragging = false;
+    card.style.transform = "";
+    card.classList.remove("drag");
+  });
+
+  card.addEventListener("click", function () {
+    if (card._skip) {
+      card._skip = false;
+      return;
+    }
+
+    if (card.disabled) {
+      return;
+    }
+
+    if (sel === card) {
+      clearSelection();
+      return;
+    }
+
+    clearSelection();
+    sel = card;
+    card.classList.add("sel");
+    showFeedback(
+      "",
+      "Where does “" + item.t + "” go?",
+      "Tap Uses AI, Not AI, or It depends."
+    );
+  });
+}
+
+document.querySelectorAll(".bin").forEach(function (bin) {
+  function chooseCategory() {
+    if (!sel) {
+      return;
+    }
+
+    var item = ITEMS.filter(function (candidate) {
+      return candidate.id === sel.dataset.id;
+    })[0];
+    judge(sel, item, bin.dataset.bin);
+  }
+
+  bin.addEventListener("click", chooseCategory);
+  bin.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      chooseCategory();
+    }
+  });
+});
+
+function start() {
+  pile.innerHTML = "";
+  $("#l-ai").innerHTML = "";
+  $("#l-no").innerHTML = "";
+  $("#l-depends").innerHTML = "";
+  sel = null;
+  sorted = 0;
+  firstTry = 0;
+  tries = {};
+
+  $("#count").textContent = "0 of " + ITEMS.length + " sorted";
+  $("#pbar").style.width = "0";
+  $("#done").style.display = "none";
+  showFeedback("", "Ready?", "Pick a card to start. Some of these are tricky!");
+
+  shuffle(ITEMS).forEach(function (item) {
+    pile.appendChild(makeCard(item));
+  });
+}
+
+$("#again").addEventListener("click", function () {
+  start();
+  window.scrollTo(0, 0);
+});
+
+start();
+</script>
+</body>
+</html>
